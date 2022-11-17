@@ -45,7 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(
                 height: 8.0,
               ),
-              _ScheduleList(selectedDate: selectedDay,),
+              _ScheduleList(
+                selectedDate: selectedDay,
+              ),
             ],
           ),
         ));
@@ -57,8 +59,10 @@ class _HomeScreenState extends State<HomeScreen> {
         showModalBottomSheet(
           context: context,
           isScrollControlled: true, // 전체화면 까지 다 차지할 수 있다.
-          builder: (_){
-              return ScheduleBottomSheet(selectedDate: selectedDay,);
+          builder: (_) {
+            return ScheduleBottomSheet(
+              selectedDate: selectedDay,
+            );
           },
         );
       },
@@ -86,46 +90,62 @@ class _ScheduleList extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: StreamBuilder<List<ScheduleWithColor>>(
-          stream: GetIt.I<LocalDatabase>().watchSchedules(selectedDate),
-          builder: (context, snapshot) {
-
-            if(!snapshot.hasData){
-              return Center(child: CircularProgressIndicator(),);
-            }
-
-            if(snapshot.hasData && snapshot.data!.isEmpty){
-              return Center(child: Text('스케쥴이 없습니다.'),);
-            }
-
-            return ListView.separated(
-              itemCount: snapshot.data!.length,
-              separatorBuilder: (context, index) {
-                return SizedBox(
-                  height: 8.0,
+            stream: GetIt.I<LocalDatabase>().watchSchedules(selectedDate),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(
+                  child: CircularProgressIndicator(),
                 );
-              },
-              itemBuilder: (context, index) {
-                final scheduleWithColor = snapshot.data![index];
+              }
 
-                return Dismissible(
-                  key: ObjectKey(scheduleWithColor.schedule.id),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (DismissDirection direction){
-                    GetIt.I<LocalDatabase>().removeSchedule(scheduleWithColor.schedule.id);
-                  },
-                  child: ScheduleCard(
-                    startTime: scheduleWithColor.schedule.startTime,
-                    endTime: scheduleWithColor.schedule.endTime,
-                    content: scheduleWithColor.schedule.content,
-                    color:Color(
-                      int.parse('FF${scheduleWithColor.categoryColor.hexCode}',radix: 16)
-                    )
-                  ),
+              if (snapshot.hasData && snapshot.data!.isEmpty) {
+                return Center(
+                  child: Text('스케쥴이 없습니다.'),
                 );
-              },
-            );
-          }
-        ),
+              }
+
+              return ListView.separated(
+                itemCount: snapshot.data!.length,
+                separatorBuilder: (context, index) {
+                  return SizedBox(
+                    height: 8.0,
+                  );
+                },
+                itemBuilder: (context, index) {
+                  final scheduleWithColor = snapshot.data![index];
+
+                  return Dismissible(
+                    key: ObjectKey(scheduleWithColor.schedule.id),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (DismissDirection direction) {
+                      GetIt.I<LocalDatabase>()
+                          .removeSchedule(scheduleWithColor.schedule.id);
+                    },
+                    child: GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true, // 전체화면 까지 다 차지할 수 있다.
+                          builder: (_) {
+                            return ScheduleBottomSheet(
+                              selectedDate: selectedDate,
+                              scheduleId: scheduleWithColor.schedule.id,
+                            );
+                          },
+                        );
+                      },
+                      child: ScheduleCard(
+                          startTime: scheduleWithColor.schedule.startTime,
+                          endTime: scheduleWithColor.schedule.endTime,
+                          content: scheduleWithColor.schedule.content,
+                          color: Color(int.parse(
+                              'FF${scheduleWithColor.categoryColor.hexCode}',
+                              radix: 16))),
+                    ),
+                  );
+                },
+              );
+            }),
       ),
     );
   }
